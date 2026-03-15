@@ -1,0 +1,651 @@
+        .ai-itinerary-container {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 2rem;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 2rem;
+        }
+        
+        .header h2 {
+          font-size: 2rem;
+          color: #1e3a8a;
+          margin-bottom: 0.5rem;
+          font-weight: 700;
+        }
+        
+        .header p {
+          color: #64748b;
+          font-size: 1.1rem;
+        }
+        
+        .tabs {
+          display: flex;
+          border-bottom: 2px solid #e2e8f0;
+          margin-bottom: 2rem;
+        }
+        
+        .tab {
+          padding: 1rem 1.5rem;
+          background: none;
+          border: none;
+          font-size: 1rem;
+          font-weight: 600;
+          color: #64748b;
+          cursor: pointer;
+          position: relative;
+        }
+        
+        .tab.active {
+          color: #3b82f6;
+        }
+        
+        .tab.active::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: #3b82f6;
+        }
+        
+        .tab:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .demo-buttons {
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+        
+        .demo-btn {
+          flex: 1;
+          padding: 0.8rem;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          color: #475569;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .demo-btn:hover {
+          background: #e0f2fe;
+          border-color: #3b82f6;
+          color: #3b82f6;
+        }
+        
+        .itinerary-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+        
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+        
+        .form-label {
+          font-weight: 600;
+          color: #374151;
+        }
+        
+        .form-input {
+          padding: 0.8rem;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 1rem;
+        }
+        
+        .form-input:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        .form-tip {
+          font-size: 0.8rem;
+          color: #6b7280;
+        }
+        
+        .option-group {
+          display: flex;
+          gap: 0.5rem;
+        }
+        
+        .option-btn {
+          flex: 1;
+          padding: 0.7rem;
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 6px;
+          color: #4b5563;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .option-btn.selected {
+          background: #3b82f6;
+          color: white;
+          border-color: #3b82f6;
+        }
+        
+        .checkbox-group {
+          margin: 1rem 0;
+        }
+        
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          position: relative;
+          padding-left: 2rem;
+        }
+        
+        .checkbox-input {
+          position: absolute;
+          opacity: 0;
+          cursor: pointer;
+          height: 0;
+          width: 0;
+        }
+        
+        .checkmark {
+          position: absolute;
+          left: 0;
+          height: 1.2rem;
+          width: 1.2rem;
+          background-color: #f9fafb;
+          border: 1px solid #d1d5db;
+          border-radius: 4px;
+        }
+        
+        .checkbox-input:checked ~ .checkmark {
+          background-color: #3b82f6;
+          border-color: #3b82f6;
+        }
+        
+        .checkmark:after {
+          content: "";
+          position: absolute;
+          display: none;
+        }
+        
+        .checkbox-input:checked ~ .checkmark:after {
+          display: block;
+          left: 0.4rem;
+          top: 0.1rem;
+          width: 0.3rem;
+          height: 0.7rem;
+          border: solid white;
+          border-width: 0 2px 2px 0;
+          transform: rotate(45deg);
+        }
+        
+        .submit-btn {
+          padding: 1rem;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          transition: background 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+          background: #2563eb;
+        }
+        
+        .submit-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+        
+        .spinner {
+          width: 1rem;
+          height: 1rem;
+          border: 2px solid transparent;
+          border-top: 2px solid white;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        .result-section {
+          animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .result-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2rem;
+        }
+        
+        .result-header h3 {
+          color: #1e3a8a;
+          font-size: 1.5rem;
+        }
+        
+        .new-plan-btn {
+          padding: 0.6rem 1.2rem;
+          background: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-radius: 6px;
+          color: #475569;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .new-plan-btn:hover {
+          background: #e0f2fe;
+          border-color: #3b82f6;
+          color: #3b82f6;
+        }
+        
+        .itinerary-days {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          margin-bottom: 2rem;
+        }
+        
+        .day-card {
+          background: #f8fafc;
+          border-radius: 8px;
+          padding: 1.5rem;
+          border-left: 4px solid #3b82f6;
+        }
+        
+        .day-header {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          margin-bottom: 1rem;
+        }
+        
+        .day-badge {
+          background: #3b82f6;
+          color: white;
+          padding: 0.3rem 0.8rem;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 600;
+        }
+        
+        .day-place {
+          font-weight: 600;
+          color: #1e293b;
+        }
+        
+        .day-activity {
+          color: #475569;
+          margin-bottom: 0.5rem;
+        }
+        
+        .day-notes {
+          background: #e0f2fe;
+          padding: 0.7rem;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          color: #0369a1;
+        }
+        
+        .notes-label {
+          font-weight: 600;
+        }
+        
+        .tips-section {
+          background: #f0f9ff;
+          padding: 1.5rem;
+          border-radius: 8px;
+          margin-bottom: 2rem;
+        }
+        
+        .tips-section h4 {
+          color: #0369a1;
+          margin-bottom: 1rem;
+        }
+        
+        .tips-list {
+          list-style: none;
+          padding: 0;
+        }
+        
+        .tip-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.7rem;
+          padding: 0.7rem 0;
+          border-bottom: 1px solid #bae6fd;
+        }
+        
+        .tip-item:last-child {
+          border-bottom: none;
+        }
+        
+        .tip-icon {
+          font-size: 1.2rem;
+        }
+        
+        .actions {
+          display: flex;
+          gap: 1rem;
+          position: relative;
+        }
+        
+        .action-group {
+          flex: 1;
+          position: relative;
+        }
+        
+        .action-btn {
+          width: 100%;
+          padding: 0.8rem;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.3s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+        
+        .action-btn:hover {
+          background: #2563eb;
+        }
+        
+        .action-btn.secondary {
+          background: #f1f5f9;
+          color: #475569;
+          border: 1px solid #e2e8f0;
+        }
+        
+        .action-btn.secondary:hover {
+          background: #e2e8f0;
+        }
+        
+        .arrow {
+          font-size: 0.7rem;
+          transition: transform 0.3s ease;
+        }
+        
+        .arrow.up {
+          transform: rotate(180deg);
+        }
+        
+        .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          margin-top: 0.5rem;
+          padding: 0.5rem;
+          z-index: 10;
+          animation: fadeIn 0.3s ease;
+        }
+        
+        .dropdown-item {
+          width: 100%;
+          padding: 0.8rem;
+          background: none;
+          border: none;
+          text-align: left;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          border-radius: 4px;
+          transition: background 0.2s ease;
+        }
+        
+        .dropdown-item:hover {
+          background: #f1f5f9;
+        }
+        
+        .share-option {
+          display: flex;
+          gap: 0.5rem;
+          padding: 0.8rem;
+        }
+        
+        .email-input {
+          flex: 1;
+          padding: 0.5rem;
+          border: 1px solid #d1d5db;
+          border-radius: 4px;
+          font-size: 0.9rem;
+        }
+        
+        .email-send-btn {
+          padding: 0.5rem 1rem;
+          background: #3b82f6;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.9rem;
+        }
+        
+        .email-send-btn:disabled {
+          background: #93c5fd;
+          cursor: not-allowed;
+        }
+        
+        @media (max-width: 768px) {
+          .ai-itinerary-container {
+            padding: 1.5rem;
+          }
+          
+          .header h2 {
+            font-size: 1.7rem;
+          }
+          
+          .demo-buttons {
+            flex-direction: column;
+          }
+          
+          .option-group {
+            flex-direction: column;
+          }
+          
+          .result-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+          }
+          
+          .actions {
+            flex-direction: column;
+          }
+          
+          .share-option {
+            flex-direction: column;
+          }
+        }
+
+/* Chat Interface Styles */
+.chat-toggle-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 50px;
+  height: 60px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.5rem;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.chat-toggle-btn.active {
+  background: #ef4444;
+  transform: rotate(135deg);
+}
+
+.chat-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.chat-window {
+  position: fixed;
+  bottom: 6rem;
+  right: 1.5rem;
+  width: 350px;
+  height: 500px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.chat-header {
+  background: #1e3a8a;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.chat-header h3 {
+  margin: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  scroll-behavior: smooth;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message {
+  max-width: 80%;
+  padding: 0.8rem;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.message.bot {
+  align-self: flex-start;
+  background: #f1f5f9;
+  color: #1e293b;
+  border-bottom-left-radius: 2px;
+}
+
+.message.user {
+  align-self: flex-end;
+  background: #3b82f6;
+  color: white;
+  border-bottom-right-radius: 2px;
+}
+
+.typing-indicator {
+  font-style: italic;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.chat-input-area {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+}
+
+.chat-input-area input {
+  flex: 1;
+  padding: 0.6rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+}
+
+.chat-input-area input:focus {
+  border-color: #3b82f6;
+}
+
+.chat-send-btn {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.3s ease;
+}
+
+.chat-send-btn:hover {
+  background: #2563eb;
+}
+
+.chat-send-btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .chat-window {
+    width: calc(100% - 2rem);
+    right: 1rem;
+  }
+}
+      

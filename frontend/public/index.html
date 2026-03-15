@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Jharkhand Tourism Platform - AI-Powered Analytics and Planning"
+    />
+    <title>Jharkhand Tourism AI Dashboard</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/pa7/heatmap.js@master/build/heatmap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/pa7/heatmap.js@master/plugins/leaflet-heatmap/leaflet-heatmap.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .leaflet-container {
+            height: 100%;
+            width: 100%;
+            z-index: 1;
+            border-radius: 12px;
+        }
+        
+        .chart-container {
+            min-height: 16rem;
+            position: relative;
+        }
+        
+        .bar {
+            transition: all 0.3s ease;
+        }
+        
+        .bar:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        #root {
+            height: 100vh;
+            overflow: auto;
+        }
+        
+        .map-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .word-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 1rem;
+        }
+        
+        .word {
+            padding: 4px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .word:hover {
+            transform: scale(1.1);
+        }
+        
+        .metric-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .ai-chatbot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .chatbot-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .chatbot-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        .chatbot-window {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 350px;
+            height: 450px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chatbot-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chatbot-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            padding: 10px 15px;
+            border-radius: 18px;
+            max-width: 80%;
+            animation: messageAppear 0.3s ease;
+        }
+        
+        @keyframes messageAppear {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bot-message {
+            background: #f1f3f4;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .user-message {
+            background: #667eea;
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .chatbot-input {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #eee;
+        }
+        
+        .chatbot-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+        }
+        
+        .chatbot-input button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        
+        .language-selector {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+        
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .lang-btn.active {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .ai-feature-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .ai-feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .itinerary-planner {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        
+        .sentiment-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .sentiment-bar {
+            height: 8px;
+            border-radius: 4px;
+            flex: 1;
+            background: #e0e0e0;
+            overflow: hidden;
+        }
+        
+        .sentiment-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        
+        .recommendation-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .tab-btn {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: #667eea;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .tab-btn.active::after {
+            width: 100%;
+        }
+        
+        .filters-panel {
+            background: #f8f9fa;
+            border-top: 1px solid #e0e0e0;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 200px; }
+        }
+        
+        .grid-container {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .grid-1 { grid-template-columns: 1fr; }
+        .grid-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+        
+        @media (max-width: 1024px) {
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+        
+        @media (max-width: 768px) {
+            .grid-4 { grid-template-columns: 1fr; }
+            .chatbot-window {
+                width: 300px;
+                height: 400px;
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+        <div class="min-h-screen analytics-dashboard">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <div class="flex flex-col items-start justify-between px-6 py-4 md:flex-row md:items-center">
+                    <div>
+                        <h2 class="flex items-center text-2xl font-bold">
+                            <span class="p-2 mr-3 text-white rounded-lg bg-gradient-to-r from-blue-500 to-purple-500">🤖</span>
+                            Jharkhand Tourism AI Dashboard
+                        </h2>
+                        <p class="mt-1 text-blue-100">AI-powered insights and personalized planning</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
+                        <button id="filter-btn" class="flex items-center px-4 py-2 bg-white rounded-lg bg-opacity-20 hover:bg-opacity-30">
+                            <span class="mr-2">🔍</span> Filters
+                        </button>
+                        
+                        <select id="time-range" class="px-4 py-2 bg-white rounded-lg bg-opacity-20">
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        
+                        <button id="mode-toggle" class="flex items-center px-4 py-2 text-white rounded-lg bg-gradient-to-r from-green-500 to-blue-500">
+                            <span class="mr-2">⚪</span>AI Mode
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Panel -->
+                <div id="filters-panel" class="hidden px-6 py-4 filters-panel">
+                    <div class="flex flex-wrap gap-4">
+                        <div>
+                            <label class="block mb-1 text-sm font-medium">District</label>
+                            <select class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg">
+                                <option value="All Districts">All Districts</option>
+                                <option value="Ranchi">Ranchi</option>
+                                <option value="Jamshedpur">Jamshedpur</option>
+                                <option value="Dhanbad">Dhanbad</option>
+                                <option value="Bokaro">Bokaro</option>
+                                <option value="Hazaribagh">Hazaribagh</option>
+                                <option value="Deoghar">Deoghar</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium">Category</label>
+                            <select class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg">
+                                <option value="all">All Categories</option>
+                                <option value="adventure">Adventure</option>
+                                <option value="cultural">Cultural</option>
+                                <option value="pilgrimage">Pilgrimage</option>
+                                <option value="wildlife">Wildlife</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-1 text-sm font-medium">Date Range</label>
+                            <select class="px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg">
+                                <option value="7">Last 7 days</option>
+                                <option value="30">Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                                <option value="365">Last year</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex items-end">
+                            <button class="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                                Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="px-6 nav-tabs">
+                    <nav class="flex space-x-8 overflow-x-auto">
+                        <button data-tab="overview" class="px-1 py-4 text-sm font-medium tab-btn active">
+                            📊 Overview
+                        </button>
+                        <button data-tab="ai-insights" class="px-1 py-4 text-sm font-medium tab-btn">
+                            🤖 AI Insights
+                        </button>
+                        <button data-tab="itinerary" class="px-1 py-4 text-sm font-medium tab-btn">
+                            🗺️ Itinerary Planner
+                        </button>
+                        <button data-tab="destinations" class="px-1 py-4 text-sm font-medium tab-btn">
+                            📍 Destinations
+                        </button>
+                        <button data-tab="satisfaction" class="px-1 py-4 text-sm font-medium tab-btn">
+                            ⭐ Satisfaction
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="p-6">
+                <!-- Overview Tab Content -->
+                <div id="overview" class="tab-content active">
+                    <div class="space-y-6">
+                        <div class="grid-container grid-4">
+                            <div class="p-6 bg-white metric-card">
+                                <div class="flex items-center">
+                                    <div class="p-3 bg-blue-100 rounded-lg">
+                                        <span class="text-xl text-blue-600">📍</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-gray-600">Active Destinations</p>
+                                        <h3 class="text-2xl font-bold text-gray-800">42</h3>
+                                        <p class="flex items-center text-sm text-green-600">
+                                            <span>↑ 3</span> from last month
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 bg-white metric-card">
+                                <div class="flex items-center">
+                                    <div class="p-3 bg-green-100 rounded-lg">
+                                        <span class="text-xl text-green-600">⏱️</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-gray-600">Avg. Stay Duration</p>
+                                        <h3 class="text-2xl font-bold text-gray-800">3.2 days</h3>
+                                        <p class="flex items-center text-sm text-red-600">
+                                            <span>↓ 0.3 days</span> from last month
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 bg-white metric-card">
+                                <div class="flex items-center">
+                                    <div class="p-3 bg-purple-100 rounded-lg">
+                                        <span class="text-xl text-purple-600">⭐</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-gray-600">Satisfaction Rate</p>
+                                        <h3 class="text-2xl font-bold text-gray-800">94%</h3>
+                                        <p class="flex items-center text-sm text-green-600">
+                                            <span>↑ 2%</span> from last month
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 bg-white metric-card">
+                                <div class="flex items-center">
+                                    <div class="p-3 bg-orange-100 rounded-lg">
+                                        <span class="text-xl text-orange-600">📱</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <p class="text-gray-600">AI Engagement</p>
+                                        <h3 class="text-2xl font-bold text-gray-800">78%</h3>
+                                        <p class="flex items-center text-sm text-green-600">
+                                            <span>↑ 5%</span> from last month
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid-container grid-2">
+                            <div class="p-6 bg-white rounded-lg shadow">
+                                <h3 class="flex items-center mb-4 text-lg font-bold">
+                                    <span class="mr-2">📈</span> Destination Popularity
+                                </h3>
+                                <canvas id="destinationPopularityChart" height="300"></canvas>
+                            </div>
+                            
+                            <div class="p-6 bg-white rounded-lg shadow">
+                                <h3 class="flex items-center mb-4 text-lg font-bold">
+                                    <span class="mr-2">💹</span> Seasonal Trends
+                                </h3>
+                                <canvas id="seasonalTrendsChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights Tab Content -->
+                <div id="ai-insights" class="tab-content">
+                    <div class="space-y-6">
+                        <div class="grid-container grid-2">
+                            <div class="ai-feature-card">
+                                <h3 class="flex items-center mb-4 text-lg font-bold text-purple-600">
+                                    <span class="mr-2">🧠</span> Sentiment Analysis
+                                </h3>
+                                <div class="mb-4">
+                                    <div class="sentiment-indicator">
+                                        <span>Positive</span>
+                                        <div class="sentiment-bar">
+                                            <div class="bg-green-500 sentiment-fill" style="width: 68%"></div>
+                                        </div>
+                                        <span>68%</span>
+                                    </div>
+                                    <div class="sentiment-indicator">
+                                        <span>Neutral</span>
+                                        <div class="sentiment-bar">
+                                            <div class="bg-yellow-500 sentiment-fill" style="width: 25%"></div>
+                                        </div>
+                                        <span>25%</span>
+                                    </div>
+                                    <div class="sentiment-indicator">
+                                        <span>Negative</span>
+                                        <div class="sentiment-bar">
+                                            <div class="bg-red-500 sentiment-fill" style="width: 7%"></div>
+                                        </div>
+                                        <span>7%</span>
+                                    </div>
+                                </div>
+                                <canvas id="sentimentChart" height="200"></canvas>
+                            </div>
+                            
+                            <div class="ai-feature-card">
+                                <h3 class="flex items-center mb-4 text-lg font-bold text-blue-600">
+                                    <span class="mr-2">💡</span> AI Recommendations
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="recommendation-item">
+                                        <strong>Improve Signage:</strong> Add multilingual signs at popular trekking routes
+                                    </div>
+                                    <div class="recommendation-item">
+                                        <strong>Enhance Digital Guides:</strong> Implement AR features at historical sites
+                                    </div>
+                                    <div class="recommendation-item">
+                                        <strong>Wildlife Experience:</strong> Add night safari options at national parks
+                                    </div>
+                                    <div class="recommendation-item">
+                                        <strong>Cultural Integration:</strong> Create interactive tribal culture experiences
+                                    </div>
+                                </div>
+                                <div class="p-3 mt-4 rounded-lg bg-blue-50">
+                                    <p class="text-sm text-blue-700">AI analysis based on 5,238 visitor reviews and feedback</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="flex items-center mb-4 text-lg font-bold">
+                                <span class="mr-2">📊</span> Feedback Trends
+                            </h3>
+                            <canvas id="feedbackTrendsChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Itinerary Planner Tab Content -->
+                <div id="itinerary" class="tab-content">
+                    <div class="space-y-6">
+                        <div class="itinerary-planner">
+                            <h3 class="flex items-center mb-4 text-xl font-bold">
+                                <span class="mr-2">🗺️</span> AI-Powered Itinerary Planner
+                            </h3>
+                            <p class="mb-4">Get personalized travel plans based on your preferences</p>
+                            
+                            <div class="grid-container grid-2">
+                                <div>
+                                    <h4 class="mb-2 font-bold">Travel Preferences</h4>
+                                    <div class="space-y-3">
+                                        <div>
+                                            <label class="block mb-1">Travel Duration</label>
+                                            <select id="duration" class="w-full p-2 rounded-lg">
+                                                <option value="1">1-2 days</option>
+                                                <option value="3" selected>3-4 days</option>
+                                                <option value="5">5-7 days</option>
+                                                <option value="7">7+ days</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1">Interest Category</label>
+                                            <select id="interest" class="w-full p-2 rounded-lg">
+                                                <option value="adventure">Adventure & Nature</option>
+                                                <option value="cultural">Cultural & Heritage</option>
+                                                <option value="spiritual">Spiritual & Pilgrimage</option>
+                                                <option value="wildlife">Wildlife & Safari</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block mb-1">Travel Pace</label>
+                                            <select id="pace" class="w-full p-2 rounded-lg">
+                                                <option value="relaxed">Relaxed</option>
+                                                <option value="moderate" selected>Moderate</option>
+                                                <option value="fast">Fast-paced</option>
+                                            </select>
+                                        </div>
+                                        <button id="generate-itinerary" class="w-full py-2 mt-4 font-bold text-purple-600 bg-white rounded-lg">
+                                            Generate Itinerary
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <h4 class="mb-2 font-bold">Your Personalized Itinerary</h4>
+                                    <div id="itinerary-result" class="p-4 bg-white rounded-lg bg-opacity-20">
+                                        <p class="py-10 text-center">Your AI-generated itinerary will appear here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid-container grid-2">
+                            <div class="p-6 bg-white rounded-lg shadow">
+                                <h3 class="flex items-center mb-4 text-lg font-bold">
+                                    <span class="mr-2">📅</span> Popular Itineraries
+                                </h3>
+                                <canvas id="popularItinerariesChart" height="250"></canvas>
+                            </div>
+                            
+                            <div class="p-6 bg-white rounded-lg shadow">
+                                <h3 class="flex items-center mb-4 text-lg font-bold">
+                                    <span class="mr-2">⭐</span> Itinerary Satisfaction
+                                </h3>
+                                <canvas id="itinerarySatisfactionChart" height="250"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Destinations Tab Content -->
+                <div id="destinations" class="tab-content">
+                    <div class="grid-container grid-2">
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Top Destinations</h3>
+                            <canvas id="topDestinationsChart" height="300"></canvas>
+                        </div>
+                        
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Destination Ratings</h3>
+                            <canvas id="destinationRatingsChart" height="300"></canvas>
+                        </div>
+                        
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Geographic Distribution</h3>
+                            <div id="geoDistributionMap" class="map-container"></div>
+                        </div>
+                        
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Live Activity Map</h3>
+                            <div id="liveActivityMap" class="map-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Satisfaction Tab Content -->
+                <div id="satisfaction" class="tab-content">
+                    <div class="grid-container grid-2">
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Visitor Satisfaction</h3>
+                            <canvas id="satisfactionMetricsChart" height="300"></canvas>
+                        </div>
+                        
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Top Positive Feedback</h3>
+                            <div class="h-64 p-4 overflow-auto rounded-lg word-cloud bg-gray-50">
+                                <span class="text-lg text-green-800 bg-green-100 word">Beautiful</span>
+                                <span class="text-xl text-green-800 bg-green-100 word">Friendly</span>
+                                <span class="text-sm text-green-800 bg-green-100 word">Clean</span>
+                                <span class="text-xl text-green-800 bg-green-100 word">Amazing</span>
+                                <span class="text-lg text-green-800 bg-green-100 word">Helpful</span>
+                                <span class="text-sm text-green-800 bg-green-100 word">Peaceful</span>
+                                <span class="text-xl text-green-800 bg-green-100 word">Wonderful</span>
+                                <span class="text-lg text-green-800 bg-green-100 word">Authentic</span>
+                                <span class="text-sm text-green-800 bg-green-100 word">Scenic</span>
+                                <span class="text-xl text-green-800 bg-green-100 word">Memorable</span>
+                                <span class="text-lg text-green-800 bg-green-100 word">Cultural</span>
+                                <span class="text-sm text-green-800 bg-green-100 word">Spiritual</span>
+                                <span class="text-xl text-green-800 bg-green-100 word">Adventurous</span>
+                                <span class="text-lg text-green-800 bg-green-100 word">Relaxing</span>
+                                <span class="text-sm text-green-800 bg-green-100 word">Educational</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Improvement Areas</h3>
+                            <canvas id="improvementAreasChart" height="300"></canvas>
+                        </div>
+                        
+                        <div class="p-6 bg-white rounded-lg shadow">
+                            <h3 class="mb-4 text-lg font-bold">Satisfaction Over Time</h3>
+                            <canvas id="satisfactionTrendsChart" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data refresh information -->
+                <div class="mt-8 text-sm text-center text-gray-500">
+                    <p>AI-powered insights. Last analysis: <span id="current-time"></span></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI Chatbot -->
+        <div class="ai-chatbot">
+            <div class="chatbot-window" id="chatbot-window">
+                <div class="chatbot-header">
+                    <div>
+                        <h3>Tourism Assistant</h3>
+                        <div class="language-selector">
+                            <button class="lang-btn active" data-lang="en">EN</button>
+                            <button class="lang-btn" data-lang="hi">HI</button>
+                            <button class="lang-btn" data-lang="bn">BN</button>
+                        </div>
+                    </div>
+                    <button id="close-chatbot">✕</button>
+                </div>
+                <div class="chatbot-messages" id="chatbot-messages">
+                    <div class="message bot-message">
+                        Hello! I'm your AI tourism assistant. How can I help you plan your Jharkhand trip?
+                    </div>
+                </div>
+                <div class="chatbot-input">
+                    <input type="text" id="chatbot-input" placeholder="Ask about destinations, activities...">
+                    <button id="send-message">Send</button>
+                </div>
+            </div>
+            <button class="chatbot-toggle" id="chatbot-toggle">💬</button>
+        </div>
+    </div>
+
+    <script>
+        // Set current time
+        document.getElementById('current-time').textContent = new Date().toLocaleString();
+        
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Hide all tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Show selected tab content
+                const tabId = this.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+                
+                // Initialize maps when destinations tab is selected
+                if (tabId === 'destinations') {
+                    setTimeout(initializeMaps, 100);
+                }
+            });
+        });
+
+        // Filter toggle functionality
+        document.getElementById('filter-btn').addEventListener('click', function() {
+            const filtersPanel = document.getElementById('filters-panel');
+            filtersPanel.classList.toggle('hidden');
+        });
+
+        // Mode toggle functionality
+        document.getElementById('mode-toggle').addEventListener('click', function() {
+            const isAI = this.textContent.includes('AI');
+            this.innerHTML = isAI ? 
+                '<span class="mr-2">🔴</span>Expert Mode' : 
+                '<span class="mr-2">⚪</span>AI Mode';
+                
+            this.classList.toggle('bg-gradient-to-r from-green-500 to-blue-500');
+            this.classList.toggle('bg-gradient-to-r from-purple-500 to-pink-500');
+            
+            // Show notification
+            alert(`Switched to ${isAI ? 'Expert' : 'AI'} mode`);
+        });
+
+        // Chatbot functionality
+        const chatbotToggle = document.getElementById('chatbot-toggle');
+        const chatbotWindow = document.getElementById('chatbot-window');
+        const closeChatbot = document.getElementById('close-chatbot');
+        const sendMessage = document.getElementById('send-message');
+        const chatbotInput = document.getElementById('chatbot-input');
+        const chatbotMessages = document.getElementById('chatbot-messages');
+        const langButtons = document.querySelectorAll('.lang-btn');
+        
+        let currentLanguage = 'en';
+        
+        chatbotToggle.addEventListener('click', function() {
+            chatbotWindow.style.display = 'flex';
+        });
+        
+        closeChatbot.addEventListener('click', function() {
+            chatbotWindow.style.display = 'none';
+        });
+        
+        langButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                langButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLanguage = this.getAttribute('data-lang');
+                
+                // Add language change message
+                addMessage(`Language switched to ${getLanguageName(currentLanguage)}`, 'bot');
+            });
+        });
+        
+        function getLanguageName(code) {
+            const languages = {
+                'en': 'English',
+                'hi': 'Hindi',
+                'bn': 'Bengali'
+            };
+            return languages[code] || 'English';
+        }
+        
+        sendMessage.addEventListener('click', function() {
+            sendUserMessage();
+        });
+        
+        chatbotInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendUserMessage();
+            }
+        });
+        
+        function sendUserMessage() {
+            const message = chatbotInput.value.trim();
+            if (message) {
+                addMessage(message, 'user');
+                chatbotInput.value = '';
+                
+                // Simulate AI response after a delay
+                setTimeout(() => {
+                    generateAIResponse(message);
+                }, 1000);
+            }
+        }
+        
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message');
+            messageDiv.classList.add(sender === 'user' ? 'user-message' : 'bot-message');
+            messageDiv.textContent = text;
+            
+            chatbotMessages.appendChild(messageDiv);
+            chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+        }
+        
+        function generateAIResponse(userMessage) {
+            const responses = {
+                'en': [
+                    "Based on your interests, I recommend visiting the Hundru Falls and Jonha Falls for adventure, and the Jagannath Temple for cultural experiences.",
+                    "The best time to visit Jharkhand is between October and March when the weather is pleasant for outdoor activities.",
+                    "For a 3-day itinerary, I suggest focusing on Ranchi's waterfalls and temples on day 1, wildlife safari on day 2, and local tribal culture on day 3.",
+                    "Jharkhand offers unique tribal handicrafts. Don't miss the local markets for authentic souvenirs.",
+                    "The state has excellent connectivity with major cities. You can reach Ranchi by flight, train, or road."
+                ],
+                'hi': [
+                    "आपकी रुचियों के आधार पर, मैं साहसिक गतिविधियों के लिए हुंडरू फॉल्स और जोन्हा फॉल्स और सांस्कृतिक अनुभवों के लिए जगन्नाथ मंदिर जाने की सलाह देता हूं।",
+                    "झारखंड की यात्रा का सबसे अच्छा समय अक्टूबर से मार्च के बीच है जब मौसम बाहरी गतिविधियों के लिए सुहावना होता है।",
+                    "3-दिवसीय योजना के लिए, मैं दिन 1 में रांची के झरनों और मंदिरों, दिन 2 में वन्यजीव सफारी और दिन 3 में स्थानीय आदिवासी संस्कृति पर ध्यान केंद्रित करने का सुझाव देता हूं।",
+                    "झारखंड अद्वितीय आदिवासी हस्तशिल्प प्रदान करता है। असली स्मृति चिन्हों के लिए स्थानीय बाजारों को न चूकें।",
+                    "राज्य की प्रमुख शहरों के साथ उत्कृष्ट कनेक्टिविटी है। आप रांची हवाई, रेल या सड़क मार्ग से पहुंच सकते हैं।"
+                ],
+                'bn': [
+                    "আপনার আগ্রহের ভিত্তিতে, আমি অ্যাডভেঞ্চারের জন্য হুন্ড্রু ফলস এবং জনহা ফলস এবং সাংস্কৃতিক অভিজ্ঞতার জন্য জগন্নাথ মন্দির দেখার পরামর্শ দিই।",
+                    "ঝাড়খণ্ড ভ্রমণের সর্বোত্তম সময় হল অক্টোবর থেকে মার্চ যখন বাইরের কার্যক্রমের জন্য আবহাওয়া আনন্দদায়ক হয়।",
+                    "3-দিনের ইতিনারির জন্য, আমি দিন 1-এ রাঁচির জলপ্রপাত এবং মন্দির, দিন 2-এ বন্যপ্রাণী সাফারি এবং দিন 3-এ স্থানীয় উপজাতীয় সংস্কৃতিতে ফোকাস করার পরামর্শ দিই।",
+                    "ঝাড়খণ্ড অনন্য উপজাতীয় হস্তশিল্প প্রদান করে। আসলা স্যুভেনিরের জন্য স্থানীয় বাজারের সন্ধান নিতে ভুলবেন না।",
+                    "রাজ্যটির প্রধান শহরগুলির সাথে চমৎকার সংযোগ রয়েছে। আপনি বিমান, ট্রেন বা সড়কপথে রাঁচি পৌঁছাতে পারেন।"
+                ]
+            };
+            
+            const randomResponse = responses[currentLanguage][Math.floor(Math.random() * responses[currentLanguage].length)];
+            addMessage(randomResponse, 'bot');
+        }
+
+        // Itinerary Planner
+        document.getElementById('generate-itinerary').addEventListener('click', function() {
+            const duration = document.getElementById('duration').value;
+            const interest = document.getElementById('interest').value;
+            const pace = document.getElementById('pace').value;
+            
+            const itineraryResult = document.getElementById('itinerary-result');
+            
+            // Generate itinerary based on selections
+            const itineraries = {
+                'adventure': [
+                    "Day 1: Arrive in Ranchi, visit Rock Garden and Kanke Dam",
+                    "Day 2: Trek to Hundru Falls and Jonha Falls",
+                    "Day 3: Explore Tagore Hill and visit local tribal villages",
+                    "Day 4: Departure with souvenir shopping"
+                ],
+                'cultural': [
+                    "Day 1: Arrive in Ranchi, visit Jagannath Temple and Ratu Palace",
+                    "Day 2: Explore tribal museums and handicraft centers",
+                    "Day 3: Visit Deoghar and Baidyanath Temple",
+                    "Day 4: Cultural performances and departure"
+                ],
+                'spiritual': [
+                    "Day 1: Arrive in Deoghar, visit Baidyanath Temple",
+                    "Day 2: Explore other temples in Deoghar area",
+                    "Day 3: Travel to Parasnath Hill for Jain temples",
+                    "Day 4: Meditation and spiritual activities, departure"
+                ],
+                'wildlife': [
+                    "Day 1: Arrive in Ranchi, visit Birsa Zoological Park",
+                    "Day 2: Safari at Betla National Park",
+                    "Day 3: Explore Palamau Tiger Reserve",
+                    "Day 4: Bird watching and nature walks, departure"
+                ]
+            };
+            
+            const selectedItinerary = itineraries[interest] || itineraries['adventure'];
+            
+            let html = `<h4 class="mb-2 font-bold">Your ${getInterestName(interest)} Itinerary</h4>`;
+            html += `<p class="mb-3 text-sm">Duration: ${getDurationText(duration)} | Pace: ${getPaceText(pace)}</p>`;
+            html += '<ul class="space-y-2">';
+            
+            selectedItinerary.forEach(day => {
+                html += `<li class="flex items-start">
+                    <span class="flex items-center justify-center w-6 h-6 mt-1 mr-2 text-purple-800 bg-purple-100 rounded-full">✓</span>
+                    ${day}
+                </li>`;
+            });
+            
+            html += '</ul>';
+            html += '<div class="p-3 mt-4 bg-white rounded-lg bg-opacity-20">';
+            html += '<p class="text-sm">AI Recommendation: This itinerary is optimized based on current weather and crowd patterns.</p>';
+            html += '</div>';
+            
+            itineraryResult.innerHTML = html;
+        });
+        
+        function getInterestName(interest) {
+            const names = {
+                'adventure': 'Adventure & Nature',
+                'cultural': 'Cultural & Heritage',
+                'spiritual': 'Spiritual',
+                'wildlife': 'Wildlife'
+            };
+            return names[interest] || 'Adventure';
+        }
+        
+        function getDurationText(duration) {
+            const texts = {
+                '1': '1-2 days',
+                '3': '3-4 days',
+                '5': '5-7 days',
+                '7': '7+ days'
+            };
+            return texts[duration] || '3-4 days';
+        }
+        
+        function getPaceText(pace) {
+            const texts = {
+                'relaxed': 'Relaxed',
+                'moderate': 'Moderate',
+                'fast': 'Fast-paced'
+            };
+            return texts[pace] || 'Moderate';
+        }
+
+        // Initialize all charts
+        function initializeCharts() {
+            // Destination Popularity Chart
+            new Chart(document.getElementById('destinationPopularityChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Deoghar', 'Bokaro', 'Hazaribagh'],
+                    datasets: [{
+                        label: 'Popularity Index',
+                        data: [85, 78, 72, 68, 65, 60],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Seasonal Trends Chart
+            new Chart(document.getElementById('seasonalTrendsChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Tourism Activity Index',
+                        data: [65, 70, 75, 80, 85, 75, 70, 75, 85, 90, 85, 75],
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Sentiment Chart
+            new Chart(document.getElementById('sentimentChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positive', 'Neutral', 'Negative'],
+                    datasets: [{
+                        data: [68, 25, 7],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(255, 99, 132, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Feedback Trends Chart
+            new Chart(document.getElementById('feedbackTrendsChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [
+                        {
+                            label: 'Positive Feedback',
+                            data: [60, 62, 65, 68, 70, 72, 75, 78, 80, 82, 85, 88],
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            fill: false
+                        },
+                        {
+                            label: 'Negative Feedback',
+                            data: [15, 14, 12, 10, 9, 8, 7, 6, 5, 5, 4, 3],
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Popular Itineraries Chart
+            new Chart(document.getElementById('popularItinerariesChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Adventure', 'Cultural', 'Spiritual', 'Wildlife'],
+                    datasets: [{
+                        label: 'Popularity (%)',
+                        data: [45, 35, 12, 8],
+                        backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Itinerary Satisfaction Chart
+            new Chart(document.getElementById('itinerarySatisfactionChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Very Satisfied', 'Satisfied', 'Neutral', 'Dissatisfied'],
+                    datasets: [{
+                        data: [65, 25, 7, 3],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(255, 99, 132, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Top Destinations Chart
+            new Chart(document.getElementById('topDestinationsChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Ranchi', 'Jamshedpur', 'Dhanbad', 'Deoghar', 'Bokaro', 'Hazaribagh'],
+                    datasets: [{
+                        label: 'Destination Score',
+                        data: [92, 88, 85, 82, 78, 75],
+                        backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Destination Ratings Chart
+            new Chart(document.getElementById('destinationRatingsChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['5 Stars', '4 Stars', '3 Stars', '2 Stars', '1 Star'],
+                    datasets: [{
+                        data: [45, 35, 12, 5, 3],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(255, 159, 64, 0.7)',
+                            'rgba(255, 99, 132, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Satisfaction Metrics Chart
+            new Chart(document.getElementById('satisfactionMetricsChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Accommodation', 'Food', 'Transport', 'Attractions', 'Guidance', 'Value'],
+                    datasets: [{
+                        label: 'Satisfaction Score',
+                        data: [85, 78, 82, 90, 88, 83],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+
+            // Improvement Areas Chart
+            new Chart(document.getElementById('improvementAreasChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Infrastructure', 'Signage', 'Cleanliness', 'Accessibility', 'Information'],
+                    datasets: [{
+                        label: 'Improvement Priority (%)',
+                        data: [75, 60, 45, 55, 40],
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                }
+            });
+
+            // Satisfaction Trends Chart
+            new Chart(document.getElementById('satisfactionTrendsChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Satisfaction Rate (%)',
+                        data: [85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96],
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize maps
+        function initializeMaps() {
+            // Geographic Distribution Map
+            const geoMap = L.map('geoDistributionMap').setView([23.6345, 85.3803], 7);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(geoMap);
+            
+            // Add markers for major tourist destinations
+            const destinations = [
+                {name: "Ranchi", lat: 23.3441, lng: 85.3096, popularity: 92},
+                {name: "Jamshedpur", lat: 22.8046, lng: 86.2029, popularity: 88},
+                {name: "Dhanbad", lat: 23.7957, lng: 86.4304, popularity: 85},
+                {name: "Deoghar", lat: 24.4823, lng: 86.7001, popularity: 82},
+                {name: "Bokaro", lat: 23.6693, lng: 86.1511, popularity: 78},
+                {name: "Hazaribagh", lat: 24.0023, lng: 85.3629, popularity: 75}
+            ];
+            
+            destinations.forEach(dest => {
+                const markerSize = dest.popularity / 10;
+                L.circleMarker([dest.lat, dest.lng], {
+                    radius: markerSize,
+                    color: '#3182CE',
+                    fillColor: '#63B3ED',
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.7
+                }).addTo(geoMap).bindPopup(`<b>${dest.name}</b><br>Popularity: ${dest.popularity}/100`);
+            });
+            
+            // Live Activity Map
+            const activityMap = L.map('liveActivityMap').setView([23.6345, 85.3803], 7);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(activityMap);
+            
+            // Simulate live activity with heatmap data
+            const heatPoints = [];
+            destinations.forEach(dest => {
+                for (let i = 0; i < dest.popularity / 5; i++) {
+                    heatPoints.push([
+                        dest.lat + (Math.random() - 0.5) * 0.5,
+                        dest.lng + (Math.random() - 0.5) * 0.5,
+                        0.7 // intensity
+                    ]);
+                }
+            });
+            
+            L.heatLayer(heatPoints, {radius: 25, blur: 15}).addTo(activityMap);
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            
+            // Initialize maps if destinations tab is active
+            if (document.getElementById('destinations').classList.contains('active')) {
+                initializeMaps();
+            }
+            
+            // Add welcome message to chatbot
+            setTimeout(() => {
+                addMessage("I can help you with trip planning, destination info, and recommendations in multiple languages. What would you like to know?", 'bot');
+            }, 1500);
+        });
+    </script>
+  </body>
+</html>
