@@ -4,7 +4,7 @@ A comprehensive web-based application designed to showcase the rich cultural her
 
 ## ✨ Live Demo
 
-🔗 **[View Live Project](https://your-netlify-link.netlify.app)** *(Add your deployment link here)*
+🔗 **[(jharkhand-tourism-platform1.netlify.app)]** *(Add your deployment link here)*
 
 
 ## 🌟 Overview
