@@ -2,10 +2,6 @@
 
 A comprehensive web-based application designed to showcase the rich cultural heritage, natural beauty, and tourist destinations of Jharkhand. This platform serves as a one-stop solution for tourists and local explorers to discover, plan, and experience the best attractions across the state.
 
-## ✨ Live Demo
-
-🔗 **[(http://localhost:3000)]** *(Add your deployment link here)*
-
 
 ## 🌟 Overview
 
